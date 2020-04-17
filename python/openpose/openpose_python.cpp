@@ -150,10 +150,20 @@ public:
                 flagsToRenderMode(FLAGS_hand_render, multipleView, FLAGS_render_pose), (float)FLAGS_hand_alpha_pose,
                 (float)FLAGS_hand_alpha_heatmap, (float)FLAGS_hand_render_threshold};
             opWrapper->configure(wrapperStructHand);
-            // Extra functionality configuration (use WrapperStructExtra{} to disable it)
+
+            // // Extra functionality configuration (use WrapperStructExtra{} to disable it)
+            // const WrapperStructExtra wrapperStructExtra{
+            //     FLAGS_3d, FLAGS_3d_min_views, FLAGS_identification, FLAGS_tracking, FLAGS_ik_threads};
+            // opWrapper->configure(wrapperStructExtra);
+
+            // const op::WrapperStructTracking wrapperStructTracking{
+            const WrapperStructTracking wrapperStructTracking{
+                FLAGS_tracking}; // Raaj: Add your flags in here
+            opWrapper->configure(wrapperStructTracking);
             const WrapperStructExtra wrapperStructExtra{
-                FLAGS_3d, FLAGS_3d_min_views, FLAGS_identification, FLAGS_tracking, FLAGS_ik_threads};
+                FLAGS_3d, FLAGS_3d_min_views, FLAGS_identification, FLAGS_ik_threads};
             opWrapper->configure(wrapperStructExtra);
+
             // Output (comment or use default argument to disable any output)
             const WrapperStructOutput wrapperStructOutput{
                 FLAGS_cli_verbose, FLAGS_write_keypoint, stringToDataFormat(FLAGS_write_keypoint_format),
@@ -420,6 +430,58 @@ template <> struct type_caster<op::Array<float>> {
         }
 
     };
+
+template <> struct type_caster<op::Array<long long>> {
+    public:
+
+        PYBIND11_TYPE_CASTER(op::Array<long long>, _("numpy.ndarray"));
+
+        // Cast numpy to op::Array<float>
+        bool load(handle src, bool imp)
+        {
+            try
+            {
+                // array b(src, true);
+                array b = reinterpret_borrow<array>(src);
+                buffer_info info = b.request();
+
+                if (info.format != format_descriptor<long long>::format())
+                    op::error("op::Array only supports float32 and long long now", __LINE__, __FUNCTION__, __FILE__);
+
+                //std::vector<int> a(info.shape);
+                std::vector<int> shape(std::begin(info.shape), std::end(info.shape));
+
+                // No copy
+                value = op::Array<long long>(shape, (long long*)info.ptr);
+                // Copy
+                //value = op::Array<float>(shape);
+                //memcpy(value.getPtr(), info.ptr, value.getVolume()*sizeof(float));
+
+                return true;
+            }
+            catch (const std::exception& e)
+            {
+                op::error(e.what(), __LINE__, __FUNCTION__, __FILE__);
+                return {};
+            }
+        }
+
+        // Cast op::Array<float> to numpy
+        static handle cast(const op::Array<long long> &m, return_value_policy, handle defval)
+        {
+            std::string format = format_descriptor<long long>::format();
+            return array(buffer_info(
+                m.getPseudoConstPtr(),/* Pointer to buffer */
+                sizeof(long long),        /* Size of one scalar */
+                format,               /* Python struct-style format descriptor */
+                m.getSize().size(),   /* Number of dimensions */
+                m.getSize(),          /* Buffer dimensions */
+                m.getStride()         /* Strides (in bytes) for each index */
+                )).release();
+        }
+
+    };
+
 }} // namespace pybind11::detail
 
 // Numpy - cv::Mat interop
