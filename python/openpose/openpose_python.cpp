@@ -150,20 +150,14 @@ public:
                 flagsToRenderMode(FLAGS_hand_render, multipleView, FLAGS_render_pose), (float)FLAGS_hand_alpha_pose,
                 (float)FLAGS_hand_alpha_heatmap, (float)FLAGS_hand_render_threshold};
             opWrapper->configure(wrapperStructHand);
-
-            // // Extra functionality configuration (use WrapperStructExtra{} to disable it)
-            // const WrapperStructExtra wrapperStructExtra{
-            //     FLAGS_3d, FLAGS_3d_min_views, FLAGS_identification, FLAGS_tracking, FLAGS_ik_threads};
-            // opWrapper->configure(wrapperStructExtra);
-
-            // const op::WrapperStructTracking wrapperStructTracking{
+            // Tracking (use op::WrapperStructTracking{} to disable it)
             const WrapperStructTracking wrapperStructTracking{
                 FLAGS_tracking}; // Raaj: Add your flags in here
             opWrapper->configure(wrapperStructTracking);
+            // Extra functionality configuration (use op::WrapperStructExtra{} to disable it)
             const WrapperStructExtra wrapperStructExtra{
-                FLAGS_3d, FLAGS_3d_min_views, FLAGS_identification, FLAGS_ik_threads};
+                FLAGS_3d, FLAGS_3d_min_views, FLAGS_identification, -1, FLAGS_ik_threads};
             opWrapper->configure(wrapperStructExtra);
-
             // Output (comment or use default argument to disable any output)
             const WrapperStructOutput wrapperStructOutput{
                 FLAGS_cli_verbose, FLAGS_write_keypoint, stringToDataFormat(FLAGS_write_keypoint_format),
